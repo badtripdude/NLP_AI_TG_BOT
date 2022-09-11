@@ -2,6 +2,8 @@ from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import CommandStart
 
+import keyboards
+import states
 from db import Users
 
 
@@ -33,9 +35,18 @@ def setup(dp: Dispatcher):
     #                                    keyboards.inline.callbacks.change_ans_cb.filter())
     # dp.register_message_handler(receive_correct_answer_from_user, state=states.TextProcessing.correct_answer)
     from handlers.user.communication import process_answer, train_switcher_command
+    from handlers.user.communication.train \
+        import train_ai_model, process_correct_answer
 
     dp.register_message_handler(train_switcher_command,
                                 commands=['train'])
+    dp.register_callback_query_handler(process_correct_answer,
+                                       keyboards.inline.callbacks.change_ans.filter(),
+                                       )
+    dp.register_message_handler(train_ai_model,
+                                state=states.TextProcessing.correct_answer
+                                )
+
     dp.register_message_handler(process_answer,
                                 content_types=types.ContentType.TEXT,
                                 )

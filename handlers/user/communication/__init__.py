@@ -1,6 +1,8 @@
 import aiogram.types
+import loguru
 
 import keyboards
+import states
 from db import Trainers, Dataset
 import aiogram.contrib.fsm_storage.memory
 
@@ -9,7 +11,7 @@ local_storage = aiogram.contrib.fsm_storage.memory.MemoryStorage()
 
 def generate_answer(message: aiogram.types.Message):
     # TODO:
-    return {'text': message.text}
+    return {'text': 'gasd'}
 
 
 def update_trainers(message: aiogram.types.Message):
@@ -47,6 +49,7 @@ async def update_prev_message(message: aiogram.types.Message):
         await message.bot.edit_message_reply_markup(message.chat.id,
                                                     prev_message_id,
                                                     reply_markup=None)
+        # loguru.logger.debug(f'input = {message.text}\n output = {}')
     if message.reply_markup is not None:
         context.update({'prev_message_id': message.message_id})
     await local_storage.update_data(chat=message.chat.id,
@@ -60,6 +63,8 @@ async def process_answer(message: aiogram.types.Message, state: aiogram.dispatch
         **await generate_train_callback(message, state=state),
         **generate_answer(message)
     })
-
+    loguru.logger.debug(message.text)
     message_sent = await message.answer(**msg_kwargs)
     await update_prev_message(message_sent)
+
+
