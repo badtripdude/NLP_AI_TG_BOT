@@ -46,9 +46,13 @@ async def update_prev_message(message: aiogram.types.Message):
     context = await local_storage.get_data(chat=message.chat.id)
     prev_message_id = context.get('prev_message_id')
     if prev_message_id:
-        await message.bot.edit_message_reply_markup(message.chat.id,
-                                                    prev_message_id,
-                                                    reply_markup=None)
+        try:
+            await message.bot.edit_message_reply_markup(message.chat.id,
+                                                        prev_message_id,
+                                                        reply_markup=None)
+        except (aiogram.exceptions.MessageNotModified, aiogram.exceptions.MessageCantBeEdited) as e:
+            loguru.logger.trace('Cant edit message with error:'+str(e))
+            context.pop('prev_message_id')
         # loguru.logger.debug(f'input = {message.text}\n output = {}')
     if message.reply_markup is not None:
         context.update({'prev_message_id': message.message_id})
@@ -63,8 +67,5 @@ async def process_answer(message: aiogram.types.Message, state: aiogram.dispatch
         **await generate_train_callback(message, state=state),
         **generate_answer(message)
     })
-    loguru.logger.debug(message.text)
     message_sent = await message.answer(**msg_kwargs)
     await update_prev_message(message_sent)
-
-

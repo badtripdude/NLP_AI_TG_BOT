@@ -1,4 +1,6 @@
 import pathlib
+import sys
+
 import yaml
 from loguru import logger
 
@@ -14,6 +16,10 @@ app_config = yaml.safe_load(
     (CONFIG_DIR / 'app.yaml').open('rb')
 )
 
+# log console
+logger.add(sys.stderr,
+           level=0)
+# log files
 logger.add(LOGS_DIR / 'trace.log', level=0)
 logger.add(LOGS_DIR / 'info.log', level=20)
 logger.add(LOGS_DIR / 'error.log', level=30)
