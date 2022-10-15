@@ -16,7 +16,15 @@ else:
 T = TypeVar("T")
 db_title = settings.DB_TITLE
 
+SCHEMA = """
+CREATE TABLE Trainers (id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL, user_id INTEGER UNIQUE NOT NULL REFERENCES Users (user_id) ON DELETE NO ACTION ON UPDATE CASCADE, join_date DATETIME DEFAULT ((DATETIME('now'))))
 
+
+CREATE TABLE Users (id INTEGER PRIMARY KEY NOT NULL UNIQUE, user_id INTEGER UNIQUE NOT NULL, join_date DATETIME DEFAULT ((DATETIME('now'))) NOT NULL, username VARCHAR, first_name VARCHAR, last_name)
+
+
+CREATE TABLE Dataset (id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL, user_id INT REFERENCES Trainers (user_id) ON DELETE CASCADE ON UPDATE CASCADE, input STRING NOT NULL ON CONFLICT IGNORE, output STRING NOT NULL ON CONFLICT IGNORE, add_date DATETIME DEFAULT ((DATETIME('now'))));
+"""
 class SqliteDBConn:
     def __init__(self, db_name):
         self.db_name = db_name
@@ -164,10 +172,3 @@ class Dataset(DatasetTableAbstract, SqliteConnection):
                                         fetch=True,
                                         mult=True):
             yield el
-
-
-def get_table(name, *, model=list):
-    for el in SqliteConnection._make_request(f'SELECT * from `{name}`;',
-                                             fetch=True,
-                                             mult=True):
-        yield model(el)

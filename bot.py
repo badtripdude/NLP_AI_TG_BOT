@@ -1,5 +1,4 @@
 import asyncio
-import tensorflow.python.framework.errors_impl
 
 import settings
 from aiogram import executor
@@ -10,37 +9,34 @@ import loguru
 
 def setup_ai_model(dp_: Dispatcher):
     loguru.logger.info('Setup Ai module')
-    dp['ai'] = None
-    # from utils.ai_api import AI, import_model, create_train_model, export_model
-    # from ai import preprocess
-    # from db import Dataset, get_table
-    # from ai.preprocess import build_dataset
-    # d = get_table('Dataset', model=dict)
-    #
-    # input, output = [], []
-    # for el in d:
-    #     input.append(str(el['input']))
-    #     output.append(str(el['output']))
-    # # setup dictionary of bot
-    # input_t_proc = preprocess.text_processor()
-    # output_t_proc = preprocess.text_processor()
-    # input_t_proc.adapt(input)
-    # output_t_proc.adapt(output)
-    # # create model
-    # t_m = create_train_model(1024, 1024, input_text_processor=input_t_proc,
-    #                          output_text_processor=output_t_proc)
-    #
-    # ai = AI(train_m=t_m)
-    # try:
-    #     import_model(ai, 'data/ai_models/train_models/best/')
-    #     loguru.logger.info('Loaded best model')
-    # except tensorflow.errors.OpError:
-    #     loguru.logger.info('Best model not found')
-    #     loguru.logger.info('Fit new model')
-    #     ai.fit_model(build_dataset((input, output)),
-    #                  epochs=23)
-    #     export_model(ai, 'data/ai_models/train_models/best/')
-    # dp_['ai'] = ai
+    from utils.ai_api import AiModel, AI
+    from db import Trainers
+
+    res = Trainers._make_request('select input from Dataset', fetch=True, mult=True)
+    inputs = list([str(list(el)[0]).lower() for el in res])
+    res = Trainers._make_request('select output from Dataset', fetch=True, mult=True)
+    outputs = list([str(list(el)[0]).lower() for el in res])
+
+    p = settings.MODEL_NAME.as_posix() + '/'
+    try:  # FIXME
+        dp['ai'] = AiModel.import_model(
+            path=p,
+            input=inputs,
+            output=outputs
+        )
+        loguru.logger.success('Loaded AiModel({})', p)
+    except Exception as e:
+        loguru.logger.warning(
+            f"Couldn't import model with name {settings.app_config['AI']['MODEL_NAME']}\nwith err msg: {e}")
+
+        a: AI = AiModel(input=inputs,
+                        output=outputs)
+        a.fit_model(input_=inputs,
+                    output=outputs,
+                    epochs=23, )
+        a.export_model(path=p)
+        loguru.logger.success(f'Create Saved Fitted AiModel')
+        dp['ai'] = a
 
 
 async def on_startup(dp_: Dispatcher):

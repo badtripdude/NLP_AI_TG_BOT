@@ -227,6 +227,7 @@ cython_debug/
 
 #
 data/configs/
-data/ai_models/train_models/best/
-data/logs/
+data/ai_models/train_models/*
+data/logs/*
 /data/db.sqlite
+data/dbs/*

@@ -20,9 +20,7 @@ def tf_lower_and_split_punct(text):
     return text
 
 
-# def export(): ...
 
-# def train_model()
 
 class DecoderInput(typing.NamedTuple):
     new_tokens: Any

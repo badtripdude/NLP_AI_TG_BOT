@@ -22,23 +22,4 @@ def text_processor(max_tokens=5000):
         max_tokens=max_tokens)
 
 
-if __name__ == '__main__':
-    def load_data(path):
-        with open(path, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-            pairs = [line.split('\t') for line in lines]
-            # return pairs
-            inp = [inp for targ, inp, _ in pairs]
-            targ = [targ for targ, inp, _ in pairs]
-        return inp, targ
-        # return ['привет', 'salyam'], ['hello', 'hi']
 
-
-    dataset_ = build_dataset(load_data('rus.txt'))
-    # dataset_ = build_dataset(('gg', 'gg'))
-
-    for example_input_batch, example_target_batch in dataset_.take(1):
-        print(example_input_batch[:5])
-        print()
-        print(example_target_batch[:5])
-        break

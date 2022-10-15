@@ -1,74 +1,76 @@
-__all__ = ('AI', 'export_model', 'import_model',
-           'create_train_model', 'create_module',
-           )
-
 import abc
 import pathlib
+import typing
+
 import tensorflow as tf
 
-from ai import module, train_model
+from ai import module, train_model, preprocess
 from ai.callbacks import BatchLogs
 from ai.preprocess import text_processor, build_dataset
 
-
-def export_model(ai, path: pathlib.Path):
-    return ai.train_model.save_weights(path)
-
-
-def import_model(ai, path: pathlib.Path = '.'):
-    t_m = ai.train_model
-    t_m.load_weights(path)
-    return AI(t_m, create_module(t_m))
+if __name__ == '__main__':
+    from base import AI
+else:
+    from .base import AI
 
 
-def create_train_model(embedding_dim, units,
-                       input_text_processor,
-                       output_text_processor, **kwargs):
-    t_m = train_model.TrainModel(embedding_dim, units,
-                                 input_text_processor=input_text_processor,
-                                 output_text_processor=output_text_processor)
-    t_m.compile(optimizer=kwargs.get('optimizer',
-                                     tf.keras.optimizers.Adam()),
-                loss=kwargs.get('loss', train_model.MaskedLoss()))
+class AiModel(AI):
+    def __init__(self, **kwargs):
+        embedding_dim = kwargs.get('embedding_dim', 1024)
+        units = kwargs.get('units', 1024)
+        input_ = kwargs['input']
+        output = kwargs['output']
 
-    return t_m
+        input_t_proc = preprocess.text_processor()
+        output_t_proc = preprocess.text_processor()
+        input_t_proc.adapt(input_)
+        output_t_proc.adapt(output)
 
+        self.train_model = self.create_train_model(embedding_dim,
+                                                   units,
+                                                   input_t_proc,
+                                                   output_t_proc)
+        self.create_module()
 
-def create_module(train_m: train_model.TrainModel):
-    return module.Translator(
-        encoder=train_m.encoder,
-        decoder=train_m.decoder,
-        input_text_processor=train_m.input_text_processor,
-        output_text_processor=train_m.output_text_processor,
-    )
+    def export_model(self, *args, **kwargs):
+        self.train_model.save_weights(kwargs['path'])
 
+    def create_module(self, **kwargs):
+        self.module = module.Translator(
+            encoder=self.train_model.encoder,
+            decoder=self.train_model.decoder,
+            input_text_processor=self.train_model.input_text_processor,
+            output_text_processor=self.train_model.output_text_processor,
+        )
 
-class AIBase(abc.ABC):  # FIXME: update
-    ...
+    def create_train_model(self,
+                           embedding_dim, units,
+                           input_text_processor,
+                           output_text_processor, **kwargs):
+        t_m = train_model.TrainModel(embedding_dim, units,
+                                     input_text_processor=input_text_processor,
+                                     output_text_processor=output_text_processor)
+        t_m.compile(optimizer=kwargs.get('optimizer',
+                                         tf.keras.optimizers.Adam()),
+                    loss=kwargs.get('loss', train_model.MaskedLoss()))
 
+        return t_m
 
-class AI(AIBase):
-    """Main Model"""
-
-    def __init__(self, train_m, module_=None):
-        if module_ is None:
-            module_ = module.Translator(
-                encoder=train_m.encoder,
-                decoder=train_m.decoder,
-                input_text_processor=train_m.input_text_processor,
-                output_text_processor=train_m.output_text_processor,
-            )
-        self.module = module_
-        self.train_model = train_m
+    @staticmethod
+    def import_model(*args, **kwargs):
+        a = AiModel(**kwargs)
+        a.train_model.load_weights(kwargs['path'])
+        return a
 
     def fit_model(self,
-                  dataset, *, epochs=3, callbacks=None, **kwargs):
+                  input_, output, *, epochs=3, callbacks=None, **kwargs):
+        dataset = build_dataset((input_, output), batch_size=64)
         if callbacks is None:
             callbacks = [BatchLogs('batch_loss')]
         self.train_model.fit(dataset, epochs=epochs,
                              callbacks=callbacks)
 
-    def predict(self, input_: str):
+    def predict_one(self, input_: str, **kwargs):
         return self.module.tf_translate(input_text=tf.constant([input_]))['text'][0].numpy().decode()
 
 
@@ -79,37 +81,20 @@ def __test():
     input_ = list([str(list(el)[0]).lower() for el in res])
     res = Trainers._make_request('select output from Dataset', fetch=True, mult=True)
     output = list([str(list(el)[0]).lower() for el in res])
-    # d = list(Dataset.get())
-    # input_ = [str(el['input']) for el in d]
-    # output = [str(el['output']) for el in d]
-    in_, out_ = text_processor(), text_processor()
-    in_.adapt(input_)
-    out_.adapt(output)
-    dataset = build_dataset((input_, output))
 
-    t_m = create_train_model(1024, 1024, input_text_processor=in_,
-                             output_text_processor=out_)
-    # tf.saved_model.save(t_m, '.')
-    # t_m = tf.saved_model.load('.')
-    ai = AI(t_m, create_module(t_m))
-    ai.fit_model(dataset, epochs=10)
-    print(ai.predict('привет'))
-    # export_model(ai, '.')
-    # ai = import_model(create_train_model(1024, 1024, input_text_processor=in_,
-    #                                      output_text_processor=out_), '.')
-    # t_m = create_train_model(1023, 1024, input_text_processor=in_,
-    #                          output_text_processor=out_)
-    # t_m.load_weights('.')
-    ai.fit_model(dataset, epochs=15)
-    ai.fit_model(build_dataset((['ратмир'], ['лох']), ), epochs=15)
-    # ai = AI(t_m, create_module(t_m))
-    for i in range(10):
-        print()
-        print()
-        print(ai.predict('привет'))
-        print(ai.predict('пока'))
-        print(ai.predict('ратмир'))
-        print(ai.predict('ты кто?'))
+    input_ = ['hi', 'bye', 'bye', 'hi']
+    output = ['hi', 'bye', 'hi', 'bye']
+
+    a = AiModel(input=input_,
+                output=output)
+    a.fit_model(['hi'], ['hi'], epochs=5)
+    a.fit_model(['bye'], ['bye'], epochs=5)
+    a.fit_model(['hi'], ['hi'], epochs=1)
+    a.create_module()
+    while 1:
+        r = a.predict_one(input('>>>'))
+
+        print(r)
 
 
 if __name__ == '__main__':

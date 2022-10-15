@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from ai.body import Encoder, Decoder, BahdanauAttention
+from ai.layers import Encoder, Decoder, BahdanauAttention
 from ai.utils import DecoderInput
 
 

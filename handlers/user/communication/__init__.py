@@ -9,9 +9,10 @@ import aiogram.contrib.fsm_storage.memory
 local_storage = aiogram.contrib.fsm_storage.memory.MemoryStorage()
 
 
-def generate_answer(message: aiogram.types.Message):
+def generate_answer(message: aiogram.types.Message, ai):
     # TODO:
-    return {'text': 'gasd'}
+    loguru.logger.trace('generating answer')
+    return {'text': ai.predict_one(message.text)}
 
 
 def update_trainers(message: aiogram.types.Message):
@@ -60,12 +61,12 @@ async def update_prev_message(message: aiogram.types.Message):
                                     data=context)
 
 
-async def process_answer(message: aiogram.types.Message, state: aiogram.dispatcher.FSMContext):
+async def process_answer(message: aiogram.types.Message, state: aiogram.dispatcher.FSMContext, ai):
     msg_kwargs = {}
 
     msg_kwargs.update({
         **await generate_train_callback(message, state=state),
-        **generate_answer(message)
+        **generate_answer(message, ai)
     })
     message_sent = await message.answer(**msg_kwargs)
     await update_prev_message(message_sent)

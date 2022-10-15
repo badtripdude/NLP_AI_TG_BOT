@@ -1,7 +1,11 @@
+# this file should be named app.yaml
 BOT:
-  API_TOKEN: ''
-  SUPER_ADMINS: ['12923912', ]
+  API_TOKEN: '***'
+  SUPER_ADMINS: ['12345124', ]
   THROTTLING_RATE_LIMIT: 0.1
 
+DB:
+  FILENAME: 'db.sqlite'
+
 AI:
-  MODEL_NAME: 'best'
+  MODEL_NAME: 'main'
