@@ -2,8 +2,7 @@ import aiogram.types
 import loguru
 
 import keyboards
-import states
-from db import Trainers, Dataset
+from db import Trainers
 import aiogram.contrib.fsm_storage.memory
 
 local_storage = aiogram.contrib.fsm_storage.memory.MemoryStorage()

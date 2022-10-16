@@ -1,12 +1,8 @@
-import abc
-import pathlib
-import typing
-
 import tensorflow as tf
 
 from ai import module, train_model, preprocess
 from ai.callbacks import BatchLogs
-from ai.preprocess import text_processor, build_dataset
+from ai.preprocess import build_dataset
 
 if __name__ == '__main__':
     from base import AI
@@ -74,28 +70,3 @@ class AiModel(AI):
         return self.module.tf_translate(input_text=tf.constant([input_]))['text'][0].numpy().decode()
 
 
-def __test():
-    from db import Trainers
-
-    res = Trainers._make_request('select input from Dataset', fetch=True, mult=True)
-    input_ = list([str(list(el)[0]).lower() for el in res])
-    res = Trainers._make_request('select output from Dataset', fetch=True, mult=True)
-    output = list([str(list(el)[0]).lower() for el in res])
-
-    input_ = ['hi', 'bye', 'bye', 'hi']
-    output = ['hi', 'bye', 'hi', 'bye']
-
-    a = AiModel(input=input_,
-                output=output)
-    a.fit_model(['hi'], ['hi'], epochs=5)
-    a.fit_model(['bye'], ['bye'], epochs=5)
-    a.fit_model(['hi'], ['hi'], epochs=1)
-    a.create_module()
-    while 1:
-        r = a.predict_one(input('>>>'))
-
-        print(r)
-
-
-if __name__ == '__main__':
-    __test()

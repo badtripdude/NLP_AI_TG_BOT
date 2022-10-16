@@ -18,8 +18,8 @@ def setup_ai_model(dp_: Dispatcher):
     outputs = list([str(list(el)[0]).lower() for el in res])
 
     p = settings.MODEL_NAME.as_posix() + '/'
-    try:  # FIXME
-        dp['ai'] = AiModel.import_model(
+    try:
+        dp_['ai'] = AiModel.import_model(
             path=p,
             input=inputs,
             output=outputs
@@ -36,7 +36,7 @@ def setup_ai_model(dp_: Dispatcher):
                     epochs=23, )
         a.export_model(path=p)
         loguru.logger.success(f'Create Saved Fitted AiModel')
-        dp['ai'] = a
+        dp_['ai'] = a
 
 
 async def on_startup(dp_: Dispatcher):

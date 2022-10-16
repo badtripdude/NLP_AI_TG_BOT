@@ -1,5 +1,4 @@
 import pathlib
-import sys
 
 import yaml
 from loguru import logger
@@ -17,9 +16,6 @@ DB_TITLE = DATA_DIR / 'dbs' / app_config['DB']['FILENAME']
 MODEL_NAME = AI_MODELS_DIR / app_config['AI']['MODEL_NAME']
 
 
-# log console
-# logger.add(sys.stderr,
-#            level=0)
 # log files
 logger.add(LOGS_DIR / 'trace.log', level=0)
 logger.add(LOGS_DIR / 'info.log', level=20)

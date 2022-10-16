@@ -1,8 +1,7 @@
-from aiogram import types, Dispatcher
+from aiogram import types
 from aiogram.dispatcher import FSMContext
 
 import settings
-from utils import ai_api
 import states
 
 
@@ -29,4 +28,3 @@ async def process_model_action(message: types.Message, state: FSMContext):
     data = await state.get_data()
     data.get('action')(message)
     await state.reset_state(False)
-
